@@ -1,0 +1,463 @@
+Java 8 Basics
+
+minimal code,functional programming
+
+concepts
+
+Functional Interface
+lambda expression
+Streams
+Date and Time API
+Method Reference
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Lambda Expressions:
+
+an anonymous function (no name, no access modifier, no return type)
+to implement functional interface
+Functional Interface reference can hold lambda expression.
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Functional Interface
+
+an interface that is having single abstract interface.
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Predicate<T>
+
+a functional interface, have one abstract method 
+
+test(T t)
+boolean valued function, to check/hold condition
+
+eg: 
+
+Predicate<Integer> isEven = x -> x%2==0
+sout(isEven.test(4));
+
+we can combine predicates with and, or, negate etc.
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Function<T,R>
+
+a functional interface, haveone abstract method
+
+R apply(T t); where T is parameter and R is return type
+
+eg:
+
+Function<Integer, Integer> doubleIt = x -> 2*x;
+sout(doubleIt.apply(10));
+
+combine function using andThen(), compose() -> reverse of andThen()
+Function.identity() - return same what we give
+Function<Integer, Integer> identity = Function.identity()
+sout(identity.apply(5)); => o/p: 5
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Consumer<T>
+
+does not return anything, only consume
+a functional interface
+
+abstract method : void accept(T t)
+
+Consumer<Integer> print = x-> sout(x);
+print.accept(5);
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Supplier<R>
+
+doesn't consume anything, only supply/return
+
+abstract method : get()
+
+Supplier<String> giveHelloWorld = ()-> "Hello World";
+sout(giveHelloWorld.get());
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Combined Example
+
+Predicate<Integer> predicate = x-> x%2==0;
+Function<Integer, Integer> function= x-> x*x;
+Consumer<Integer> consumer = sout(x);
+Supplier<Integer> supplier = 100;
+
+if(predicate.test(supplier.get()){
+	consumer.accept(function.apply(supplier.get()));  //10000
+}
+
+All of above are taking single argument, for 2 arguments we can use
+
+BiPredicate, BiFunction, BiConsumer
+
+
+UnaryOperator<T>
+
+In case of Function, if argument and return type is of same data type,then we need to duplicate it.
+Except that we can use UnaryOperator<T>
+
+UnaryOperator<Integer> a= x-> 2*x;
+
+BinaryOperator
+
+BinaryOperator can be used in place of BiFunction, if both arguments and return type is same.
+
+BinaryOperator<Integer> sum= (x,y)-> x+y;
+-------------------------------------------------------------------------------------------------------------------------------
+
+Method Reference
+
+use method without invoking and in place of lambda expression.
+
+List<String> = Arrays.asList("Nikita","Aman");
+students.forEach(x -> sout(x));		//lambda expression
+students.forEach(System.out::println); //method reference
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Constructor Reference
+
+class MobilePhone{
+	
+	String name;
+	
+	public MobilePhone(String name){
+		this.name = name;
+	}
+}
+
+List<String> names = Arrays.asList("Vivo", "Apple", "Oppo");
+List<MobilePhone> mobilePhonesList = names.stream().map(x-> new MobilePhone(x)).collect(Collectors.toList());
+List<MobilePhone> mobilePhonesList = names.stream().map(MobilePhone::new).collect(Collectors.toList()); //constructor reference
+
+-------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------
+
+Streams
+
+feature introduced in Java 8
+process collections of data in a functional and declarative manner
+simplify data processing
+embrace functional programming
+improve readability and maintainability
+enable easy parallelism
+
+What is Stream?
+a sequence of elements supports functional and declarative programming
+
+How to use streams?
+
+source -> intermediate operation -> terminal operation
+
+List<Integer> numbers = Arrays.asList(1,2,3,4,5);
+numbers.stream().filter(x-> x%2==0).count(); //count even numbers
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+//Creating Streams
+
+1) From collections
+
+List<Integer> list = Arrays.asList(1,2,3,4,5);
+list.stream()
+
+2) From Arrays
+String[] arr = {"a","b","c"};
+Arrays.stream(arr);
+
+3) Stream.of("a","b");
+
+4) Infinite Streams
+a) Stream.generate(() -> 1).limit(100); //if limit removed, it is infinite
+b) Stream.iterate(seed, unary operator); where seed is starting point and unary operator is a function where arg and return type is same
+Stream.iterate(1, x-> x+1).limit(100).collect(Collectors.toList()); counting from 1 
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Intermediate Operations
+
+transforms a stream into another stream
+they are lazy, meaning don't execute until a terminal operation is invoked
+
+1) filter(Predicate) - filter streams based on some condition
+2) map(Function) - to perform some task on elements of stream
+3) sorted() - sort stream in natural ordering, or we can pass comparator for custom ordering
+4) distinct() - for getting unique elements from stream.
+5) limit - to get result to some limit
+6) skip - to skip some elements from stream
+Stream.iterate(1,x-> x+1).skip(10).limit(100).count();   first 10 elements will be skipped, and we have stream from 11 to 110
+7) peek(Consumer)- performs an action on each element as it is consumed (like forEach, but peek() is an intermediate operation)
+
+Stream.iterate(1,x-> x+1).skip(10).limit(100).peek(System.out::println).count();
+
+8) flatMap() 
+
+handle streams of collections, lists, or arrays where each element is itself a collection.
+Flatten nested structures(eg. lists within lists), so that they can be processed as a single sequence of elements
+transform and flatten elements at same time
+
+eg: 
+
+List<List<String>> listOfLists = Arrays.asList(
+	Arrays.asList("apple", "banana"),
+	Arrays.asList("orange", "kiwi"),
+	Arrays.asList("pear", "grape")
+);
+listOfLists.get(1).get(1);  // kiwi
+
+listOfLists.stream.flatMap(x -> x.stream()).map(String::toUpperCase()).toList();
+
+eg 2:
+
+List<String> sentences = Arrays.asList("Hello World", "Java streams are so powerful", "flatmap is useful");
+
+sentences.stream().flatMap(sentence -> Arrays.stream(sentence.split(" "))).map(String::toUpperCase).toList();
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Terminal Operations
+
+1) collect(Collector) - Returns a collector that accumulates the input elements into a new list
+list.stream().map(x-> 2*x).collect(Collectors.toList()); //toSet, toUnmodifiableSet etc.
+or we can use toList() directly
+list.stream().map(x-> 2*x).toList();
+
+2) forEach(Consumer) - to perform some operation on each element of stream
+
+3) reduce(Binary Operator): combines element to produce a single result
+Optional<Integer> sum = list.stream.reduce((x,y) -> x+y); //summ of all element
+or
+Optional<Integer> sum = list.stream.reduce(Integer::sum); 
+sout(sum.get());
+
+4) count - count no of elements of stream
+
+
+5) anyMatch(Predicate), allMatch, noneMatch
+boolean b = list.stream().anyMatch(x -> x%2==0);
+
+anyMatch - if any element fulfils the condition, return true
+allMatch - if all elements fulfils the condition, return true
+noneMatch - if no elements fulfils the condition, return true
+
+6) findFirst(), findAny()
+
+anyMatch(Predicate), allMatch, noneMatch, findFirst(), findAny() are short-circuit operation, i.e. if it finds a match, then it stops processing and won't process further elements.
+
+7) toArray() - to convert stream into array. 
+Stream.of(1,2,3).toArray();
+
+8) min/ max - return first and last element based on sorting
+
+Stream.of(2,44,69).max(Comparator.naturalOrder()); //69
+Stream.of(2,44,69).min((o1, o2) -> o1-o2);
+
+9) forEachOrdered() : in case of parallel stream, if we want to perform operation in some order then we can use this
+
+## Stream can't be reused after a terminal operation has been called.
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Practice Examples
+
+1) return names whose length is greater than 3
+
+names.stream().filter(x -> x.length() > 3).collect(Collectors.tolist());
+
+2) squaring and sorting numbers
+
+numbers.stream().map(x -> x*x).sorted().tolist();
+
+3) summing values
+
+numbers.stream().reduce(Integer::sum).get();
+
+4) counting occurence of charcater
+
+String sentence = "Hello World"; //count no of l
+sentence.chars() //return IntStream
+sentence.chars().filter(x -> x == 'l').count();
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Stateful and Stateless operation
+
+Stateless operation -> an operation doesn't know about other elements, process one element at one time eg: map
+Stateful operation -> an operation that knows about all elements. eg: distinct, sorted
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+ParallelStream
+
+a type of stream that enables parallel processing of elements
+allowing multiple threads to process parts of the stream simultaneously
+significantly improve performance for large data sets
+workload is distributed across multiple threads
+
+Eg:
+
+public class ParallelStream{
+	
+	public static long factorial(int n){
+		long result = 1;
+		for(int i=2; i<=n; i++)
+			result *= i;
+		return result;
+	}
+	
+	List<Integer> list = Stream.iterate(1, x-> x+1).limit(20000).toList();
+	List<Long> factorialList = list.stream().map(ParallelStream::factorial).toList(); //consume lot of time
+	
+	//use parallel stream
+	factorialList = list.parallelStream().map(ParallelStream::factorial).toList(); //take very less time comparatively
+}
+
+Parallel streams are most effective for CPU-intrensive or large datasets where tasks are independent
+they may add overhead for simple tasks or small datasets.
+
+//Cumulative Sum
+
+[1,2,3,4,5]  -> [1,3,6,10,15]
+
+AtomicInteger sum = new Atomic Integer(0); //because in lambda expr variable should be final or effectively final
+List<Integer> cumulativeSum = numbers.stream().map(sum::addAndGet).toList();
+
+addAndGet() -> atomically add value to given value; add x to sum
+
+sequential()
+
+to convert parallel stream into sequential stream.
+
+factorialList = list.parallelStream().map(ParallelStream::factorial).sequential().toList(); //just for example no use
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Collectors
+
+Collectors is a utility class 
+provides a set of methods to create common collectors
+
+1) .collect(Collectors.toList()) - collecting to list (all)
+
+2) .collect(Collectors.toSet()) - collecting to set (only unique)
+
+3) Collectors.toCollection(Supplier)- collecting to a specified collection
+eg:
+ArrayDeque<String> collect = names.stream().collect(Collectors.toCollection(() -> new ArrayDeque<>()));
+
+4) Joining Strings = concatenate stream elements into a single string
+
+names.stream().map(String::toUpperCase).collect(Collectors.joining(", ")); convert all names into uppercase and separate with ", "
+
+5) Summarizing data - Generates statistical summary (count, sum, min, average, max)
+
+IntSummaryStatistics stats = numbers.stream().collect(Collectors.summarizingInt(x->x));
+stats.getCount();
+stats.getSum(); getMin(), getAverage(), getMax();
+
+6) we can get this summary directly as well like
+
+Double average =  numbers.stream.collect(Collectors.averagingInt(x -> x));
+
+.collect(Collectors.counting()); // for count no of elements
+
+7) Grouping elements
+//group all words on the basis of their length
+
+a) words.stream().collect(Collectors.groupingBy(String::length)); groupingBy(classifier)
+
+b) words.stream().collect(Collectors.groupingBy(String::length, Collectors.joining(","))); groupingBy(classifier, downstream)
+downstream -> if want to perfoem some operation on group like joining them counting them etc.
+
+c) words.stream().collect(Collectors.groupingBy(String::length, TreeMap:: new, Collectors.counting())); groupingBy(classifier, Map impl, downstream)
+
+8) Partitioning elements
+
+partition elements into two groups based on predicate
+
+eg. 1 group - words length greater than 5 , 2 group - less than 5
+
+words.stream().collect(Collectors.partitioningBy(x -> xlength()>5));
+
+9) Mapping and Collecting 
+
+applies mapping function before collecting
+
+words.stream().collect(Collectors.mapping(String::toUpperCase, Collectors.toList()));
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Practice Examples:
+
+1) collecting names by length
+
+names.stream().collect(Collectors.groupingBy(String::length);
+
+2) counting word occurences
+
+String sentence = "hello world hello java world";
+Arrays.stream(sentence.split(" ")).collect(Collectors.groupingBy(x-> x, , Collectors.counting())); here groupingBy criteria is word itself only
+
+3) Partitioning eeven and odd numbers
+
+numbers.stream().collect(Collectors.partitioningBy(x -> x%2==0));
+
+4) summing values in a map
+
+Map<String, Integer> items = new HashMap<>();
+items.put("Apple", 10);
+items.put("Banana", 20);
+items.put("Orange", 15);
+
+items.values().stream().reduce(Integer::sum);
+items.values().stream().collect(Collectors.summingInt(x-> x));
+
+5) create a map from stream elements on the basis of String length
+where String is key, value is length
+
+List<String> fruits = Arrays.asList("Apple", "Banana", "Cherry");
+fruits.stream().collect(Collectors.toMap(x-> x.toUpperCase(), x-> x.length()));  //to convert stream into map; toMap(key, value)
+
+6) to count word occurence using toMap with merge function
+
+toMap(key, value, merge function)
+
+List<String> words2 = Arrays.asList("apple", "banana", "apple", "orange", "banana", "apple");
+words2.stream().collect(Collectors.toMap(k -> k, v->1, (x,y)-> x+y));  merge function = take previous count and add new count
+like apple - 1, 1+1=2, 2+1 = 3
+		banana -1 , 1+1 = 2
+		orange - 1
+		
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Primitive Stream
+
+IntStream, DoubleStream etc
+
+int[] numbers = {1,2,3,4,5};
+IntStream intStream = Arrays.stream(numbers);
+
+IntStream.range(1,5); 1 inclusive, 5- exclusive
+IntStream.range(1,5).boxed().collect(Collectors.toList());  boxed() => to convert into wrapper class
+
+rangeClosed(1,5); - both inclusive
+
+IntStream.of(1,2,3,4);
+
+DoubleStream doubles = new Random().doubles(5); //return 5 double random numbers
+doubles.boxed().toList();
+doubles.sum();
+doubles.mapToInt(x-> (int)x+1)
+
+IntStream ints = new Random().ints(5);
+ints.boxed().toList();
+ints.average();
